@@ -169,3 +169,90 @@ italy = filter_items(lambda city: city["country"] == "Italy", cities)
 max_temp_italy = aggregate("temperature", lambda temp: max(float(x) for x in temp), italy)
 print(max_temp_italy)
 print()
+
+
+print("-" * 50)
+print("OOP")
+print("-" * 50)
+print()
+
+__location__ = os.path.realpath(
+    os.path.join(os.getcwd(), os.path.dirname(__file__))
+)
+
+class DataLoader:
+    def __init__(self, filepath):
+        self.filepath = filepath
+
+    def load(self):
+        cities = []
+        with open(self.filepath, mode='r', encoding='utf-8') as f:
+            rows = csv.DictReader(f)
+            for r in rows:
+                cities.append(dict(r))
+        return cities
+
+class Table:
+    def __init__(self, data):
+        self._data = data
+
+    def filter_item(self, condition):
+        filtered_data = [item for item in self._data if condition(item)]
+        return Table(filtered_data) 
+
+    def aggregate(self, aggregation_key, aggregation_function):
+        values = []
+        for item in self._data:
+            val = item[aggregation_key]
+            try:
+                val = float(val)
+            except ValueError:
+                pass
+            values.append(val)
+        return aggregation_function(values)
+
+    def get_data(self):
+        return self._data
+
+# main
+csv_path = os.path.join(__location__, "Cities.csv")
+loader = DataLoader(csv_path)
+raw_data = loader.load()
+cities_table = Table(raw_data)
+
+# Print the average temperature of all the cities
+print("The average temperature of all the cities")
+avg_temp = cities_table.aggregate("temperature", lambda temp: sum(temp) / len(temp))
+print(avg_temp)
+print()
+
+# Print all cities in Germany
+print("All cities in Germany")
+germany_table = cities_table.filter_item(lambda city: city["country"] == 'Germany')
+print([c["city"] for c in germany_table.get_data()])
+print()
+
+# Print all cities in Spain with a temperature above 12°C
+print("All cities in Spain with a temperature above 12°C")
+spain_warm_table = cities_table.filter_item(lambda city: city['country'] == 'Spain' and float(city['temperature']) > 12)
+print([city['city'] for city in spain_warm_table.get_data()])
+print()
+
+# Count the number of unique countries
+print("The number of unique countries")
+uniq = len(set(cities_table.aggregate("country", lambda country: country)))
+print(uniq)
+print()
+
+# Print the average temperature for all the cities in Germany
+print("The average temperature for all the cities in Germany")
+avg_german_temp = germany_table.aggregate("temperature", lambda temp: sum(temp) / len(temp))
+print(avg_german_temp)
+print()
+
+# Print the max temperature for all the cities in Italy
+print("The max temperature for all the cities in Italy")
+italy_table = cities_table.filter_item(lambda c: c["country"] == 'Italy')
+max_italy_temp = italy_table.aggregate("temperature", max)
+print(max_italy_temp)
+print()
